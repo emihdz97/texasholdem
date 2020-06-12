@@ -21,7 +21,11 @@
 ### Card Analizer 
 #### Based on https://github.com/kennethshackleton/SKPokerEval
 
-#### Each card have a value depending on the number and the suit, depending on these cards the algorith returns a score of the hand with the different combinations to identify the winner 
+#### Each card have a value depending on the number and the suit, depending on these cards the algorith returns a score of the hand with the different combinations to identify the winner using the 2 cards of each player and the 5 cards on the table trying out the different combinations and get the higher one.
+
+
+
+
 
 
 
