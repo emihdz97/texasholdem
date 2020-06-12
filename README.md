@@ -8,7 +8,7 @@
 ### Usage 
 #### 1) Make (Compile all the programs)
 #### 2) Run Server : ./texas_server port number 
-#### 3) Execute three client each on different terminal with: ./texas_client 127.0.0.1 port number 
+#### 3) Execute three client each on different terminal with: ./texas_client server-ip port number 
 ### 3 Players needed to start playing
 
 
@@ -16,7 +16,7 @@
 #### Check  (If there is no increase in the bets)
 #### Push   (If the player wants to bet higher)
 #### Leave	 (If another player raises bets and the current player does not want to bet)
-#### All in (If the player has less than the bets by other player or want to bet all hs money)
+#### All in (If the player has less than the bets by other player or want to bet all his money)
 
 ### Card Analizer 
 #### Based on https://github.com/kennethshackleton/SKPokerEval
