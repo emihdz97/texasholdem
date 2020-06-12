@@ -1,6 +1,6 @@
-####Naji M A Saadat A01025599 
-####Ernesto Ramirez A01019589
-####Emilio Hernández  A01336418
+#### Naji M A Saadat A01025599 
+#### Ernesto Ramirez A01019589
+#### Emilio Hernández  A01336418
 
 # Texas Holdem Online 
 ##     3 Players
