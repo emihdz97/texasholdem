@@ -1,5 +1,9 @@
+####Naji M A Saadat A01025599 
+####Ernesto Ramirez A01019589
+####Emilio Hernández  A01336418
+
 # Texas Holdem Online 
-#     3 Players
+##     3 Players
 
 ### Usage 
 #### 1) Make (Compile all the programs)
@@ -15,10 +19,10 @@
 #### All in (If the player has less than the bets by other player or want to bet all hs money)
 
 ### Card Analizer 
-## Based on https://github.com/kennethshackleton/SKPokerEval
+#### Based on https://github.com/kennethshackleton/SKPokerEval
 
-### Each card have a value depending on the number and the suit, depending on these cards the algorith returns a score of the hand with the different combinations to identify the winner 
+#### Each card have a value depending on the number and the suit, depending on these cards the algorith returns a score of the hand with the different combinations to identify the winner 
 
 
-### 
+
 
