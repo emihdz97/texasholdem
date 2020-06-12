@@ -2,9 +2,9 @@
 #     3 Players
 
 ### Usage 
-# 1) Make (Compile all the programs)
-# 2) Run Server : ./texas_server port number 
-# 3) Execute three client each on different terminal with: ./texas_client 127.0.0.1 port number 
+#### 1) Make (Compile all the programs)
+#### 2) Run Server : ./texas_server port number 
+#### 3) Execute three client each on different terminal with: ./texas_client 127.0.0.1 port number 
 ### 3 Players needed to start playing
 
 
