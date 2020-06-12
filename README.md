@@ -9,10 +9,10 @@
 
 
 ### Playing Options 
-# Check  (If there is no increase in the bets)
-# Push   (If the player wants to bet higher)
-# Leave	 (If another player raises bets and the current player does not want to bet)
-# All in (If the player has less than the bets by other player or want to bet all hs money)
+#### Check  (If there is no increase in the bets)
+#### Push   (If the player wants to bet higher)
+#### Leave	 (If another player raises bets and the current player does not want to bet)
+#### All in (If the player has less than the bets by other player or want to bet all hs money)
 
 ### Card Analizer 
 ## Based on https://github.com/kennethshackleton/SKPokerEval
