@@ -1,0 +1,294 @@
+/*
+    Simulates shuffling a deck of cards 
+    using structures and typedef 
+    by initializing, shuffling, and displaying the card deck
+    https://www2.hawaii.edu/~walbritt/ics212/examples/cards.c
+
+    Program for a simple bank server
+    It uses sockets and threads
+    The server will process simple transactions on a limited number of accounts
+    Gilberto Echeverria
+    gilecheverria@yahoo.com
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+// Signals library
+#include <errno.h>
+#include <signal.h>
+// Sockets libraries
+#include <netdb.h>
+#include <sys/poll.h>
+// Posix threads library
+#include <pthread.h>
+#include <sys/socket.h>
+
+// Custom libraries
+#include "sockets.h"
+
+#define BUFFER_SIZE 1024
+#define MAX_PLAYERS 3
+
+
+// Global variables for signal handlers
+int interrupt_exit = 0;
+int n_of_players = 0;
+
+//structure definition
+//structure of a client
+typedef struct client_struct{
+    int id;
+    int connection_fd;
+    float balance;
+}client;
+
+//structures of the array of players
+typedef struct array_struct{
+    //Array of clients that are playing
+    client * players_array;
+}players;
+
+//structures for mutex
+typedef struct locks_struct{
+    pthread_mutex_t * client_mutex;
+}locks;
+
+//Final structur for the threads
+typedef struct data_struct{
+    players * players_Data;
+    locks * locks_Data;
+}data_thread;
+
+//structure of a card
+struct card{ 
+  char *rank;    
+  char suit[9];  
+};
+typedef struct card Card;
+
+//array of pointers to strings for ranks
+char *ranks[13] = {"Ace", "Two", "Three", "Four", "Five", "Six", "Seven", 
+			  "Eight", "Nine", "Ten", "Jack", "Queen", "King"};
+
+//two-dimensional array of strings for suits
+char suits[4][9] = {"Clubs", "Diamonds", "Hearts", "Spades"};
+
+///// FUNCTION DECLARATIONS
+void usage(char * program);
+void setupHandlers();
+void waitForConnections(int server_fd, players * players_Data, locks * locks_Data);
+char* setup_deck();
+void* attentionThread(void * arg);
+void initialize(Card []);
+void shuffle(Card []);
+void init(players * players_Data, locks * locks_Data);
+
+///// MAIN FUNCTION
+int main(int argc, char * argv[])
+{
+    int server_fd;
+    players players_Data;
+    locks locks_Data;
+    printf("\n=== SIMPLE TEXAS SERVER ===\n");
+
+    // Check the correct arguments
+    if (argc != 2)
+    {
+        usage(argv[0]);
+    }
+
+    // Configure the handler to catch SIGINT
+    setupHandlers();
+
+    //Prepare all the data structures
+    printf("About to enter in init\n");
+    init(&players_Data, &locks_Data);
+    printf("Going out from init\n");
+
+	// Show the IPs assigned to this computer
+	printf("About to enter in printLocalIPs\n");
+    printLocalIPs();
+    printf("Going out from printLocalIPs\n");
+
+    // Start the server
+    server_fd = initServer(argv[1], MAX_PLAYERS);
+	
+    // Listen for connections from the clients
+    printf("About to enter in Waitng For Conections\n");
+    waitForConnections(server_fd, &players_Data, &locks_Data);
+    
+    //declare an array of 52 cards
+    Card deck[52] = {"",""};
+    initialize(deck);
+    printf("\nshuffling deck ... \n");
+    shuffle(deck);
+    
+    // Close the socket
+    close(server_fd);
+
+    // Clean the memory used
+    //closeBank(&bank_data, &data_locks);
+
+    // Finish the main thread
+    pthread_exit(NULL);
+
+    return 0;
+}
+
+///// FUNCTION DEFINITIONS
+
+/*
+    Explanation to the user of the parameters required to run the program
+*/
+void usage(char * program)
+{
+    printf("Usage:\n");
+    printf("\t%s {port_number}\n", program);
+    exit(EXIT_FAILURE);
+}
+
+/*
+    Modify the signal handlers for specific events
+*/
+void setupHandlers()
+{
+
+}
+
+/*
+    Main loop to wait for incomming connections
+*/
+void waitForConnections(int server_fd, players * players_Data, locks * locks_Data)
+{
+    struct sockaddr_in client_address;
+    socklen_t client_address_size;
+    char client_presentation[INET_ADDRSTRLEN];
+    int client_fd;
+    pthread_t new_tid;
+    data_thread *temp_Data;
+    int poll_response;
+    int timeout = 500;
+
+    struct pollfd test_fds[1];
+
+    test_fds[0].fd = server_fd;
+    test_fds[0].events = POLLIN;
+    
+    // Get the size of the structure to store client information
+    client_address_size = sizeof client_address;
+    while (1)
+    {
+        poll_response = poll(test_fds, server_fd, timeout);
+        if (poll_response > 0)
+        {
+            client_fd = accept(server_fd, (struct sockaddr *)&client_address, &client_address_size);
+            if (client_fd == -1)
+            {
+                perror("ERROR: accept");
+            }
+
+            // Get the data from the client
+            inet_ntop(client_address.sin_family, &client_address.sin_addr, client_presentation, sizeof client_presentation);
+            printf("Received incomming connection from %s on port %d\n", client_presentation, client_address.sin_port);
+            
+            //Prepare the structue of the new cliente
+            temp_Data = (data_thread *) malloc (sizeof(data_thread));
+            temp_Data->players_Data = players_Data;
+            temp_Data->players_Data->players_array[n_of_players].connection_fd = client_fd;
+            temp_Data->players_Data->players_array[n_of_players].id = n_of_players +1;
+            temp_Data->locks_Data = locks_Data;
+            printf("Actual cliente id: %d\n", temp_Data->players_Data->players_array[n_of_players].id);
+            printf("Actual cliente fd: %d\n", client_fd);
+            printf("Actual client fd saved: %d\n", temp_Data->players_Data->players_array[n_of_players].connection_fd);
+
+            //Create a thrad to recive the start amount of balance for each client
+            pthread_create(&new_tid, NULL, attentionThread, (void *) temp_Data);
+        }
+        else if (poll_response == 0)
+        {
+            if (n_of_players <= MAX_PLAYERS)
+            {
+                break;
+            }
+            
+        }
+        else
+        {
+            perror("Error in the poll\n");
+        }
+    }
+    printf("Lets start the game\n");
+    // Show the number of total transactions
+    // Store any changes in the file
+}
+
+/*
+    Hear the request from the client and send an answer
+*/
+void * attentionThread(void * arg)
+{
+    //Receive the balance of the current cliente
+    char buffer[BUFFER_SIZE];
+    data_thread * temp_client = arg;
+    int tester;
+    int current_id = n_of_players;
+    n_of_players += 1;
+
+    //printf("This is the cliente fd: %d\n", temp_client->players_array[temp_client->id].connection_fd);
+    tester = recv(temp_client->players_Data->players_array[current_id].connection_fd, buffer, BUFFER_SIZE, 0);
+    if (tester <= 0)
+    {
+        perror("Error in the recv\n");
+    }
+        
+    sscanf(buffer, "%f", &temp_client->players_Data->players_array[current_id].balance);
+    printf("The current data of the player number: %d\nConnection number: %d\nCurrent balance %f\n",temp_client->players_Data->players_array[current_id].id,temp_client->players_Data->players_array[current_id].connection_fd, temp_client->players_Data->players_array[current_id].balance);
+    pthread_exit(NULL);
+}
+
+/*
+  initialize the deck of cards to string values
+  deck: an array of structure cards 
+*/
+void initialize(Card deck[]){
+  int i = 0;
+  for(i=0;i<52;i++){
+    deck[i].rank = ranks[i%13];
+    strncpy(deck[i].suit, suits[i/13], 9);
+  }
+}
+
+/*
+  use the pseudo-random number generator to shuffle the cards
+  deck: an array of structure cards 
+*/
+void shuffle(Card deck[]){
+  int swapper = 0; //index of card to be swapped
+  int i = 0; //counter
+  Card temp = {"", ""}; //temp holding place for swap
+  srand(time(NULL)); //seed the random numbers with current time
+  for(i=0;i<52;i++){
+    //generate a pseudo-random number from 0 to 51
+    swapper = rand() % 52; 
+    //swap current card with da swapper
+    temp = deck[i];
+    deck[i] = deck[swapper];
+    deck[swapper] = temp;
+  }
+}
+
+void init(players * players_Data, locks * locks_Data)
+{
+    players_Data->players_array = malloc(MAX_PLAYERS * sizeof(client));
+    locks_Data->client_mutex = malloc(MAX_PLAYERS * sizeof (data_thread));
+
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        pthread_mutex_init(&locks_Data->client_mutex[i], NULL);
+        players_Data->players_array[i].balance = 0.0;
+    }
+    
+}
